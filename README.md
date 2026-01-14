@@ -64,5 +64,5 @@ The CNN significantly outperforms classical models by exploiting the time–freq
 - Designing and evaluating CNNs for audio classification
 - End-to-end ML experimentation and analysis
 
-**LODJO PAYONG**  
+**LODJO Florielle**  
 Engineering student – Data Science & Artificial Intelligence
