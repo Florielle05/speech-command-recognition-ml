@@ -1,0 +1,16 @@
+speech-command-demo/
+│
+├── app.py
+├── requirements.txt
+├── README.md
+│
+├── models/
+│   └── model.pkl
+│
+├── src/
+│   ├── preprocess.py
+│   ├── features.py
+│   └── predict.py
+│
+└── assets/
+    └── demo.png
