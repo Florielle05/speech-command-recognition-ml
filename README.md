@@ -53,35 +53,39 @@ Each subfolder contains `.wav` files of spoken commands.
 ---
 
 ## Exploratory Analysis & Model Selection
-
-Before implementing the final pipeline, an exploratory analysis was conducted to better understand the dataset and guide model selection.
+Before implementing the final demo pipeline, we conducted a more advanced experimental study
+to benchmark different modeling approaches on the Speech Commands dataset.
 
 The notebook:
 notebooks/01_data_exploration_and_model_choice.ipynb
-covers:
-- class distribution analysis
-- inspection of MFCC features
-- baseline comparison between:
-  - logistic regression (linear baseline)
-  - SVM with non-linear kernel
-- performance vs. complexity trade-offs
 
-This analysis motivated the choice of an **SVM classifier**, which provides a good balance between expressive power and computational efficiency for a demo-oriented application.
+includes:
+- detailed analysis of class distributions
+- proper construction of a `silence` class using sampled background noise
+- comparison between multiple model families:
+  - logistic regression
+  - SVM (MFCC-based)
+  - convolutional neural networks (log-mel spectrograms)
+- evaluation of performance, training cost, and inference complexity
+
+This notebook demonstrates that while CNN-based models achieve higher accuracy,
+the SVM approach provides a more favorable trade-off for a lightweight demo application.
+
 
 ---
 
 ## Model Choice (Why SVM?)
+Although convolutional neural networks outperform classical models in terms of raw accuracy,
+they introduce additional complexity in terms of:
+- model size
+- inference latency
+- deployment constraints
 
-We deliberately use an **SVM classifier** trained on **MFCC features** for this project.
+Since the goal of this project is to deliver a **simple, fast, and easily deployable demo**,
+I intentionally chose an **SVM classifier** trained on MFCC features for the Streamlit application.
 
-This choice offers:
-- stronger decision boundaries than linear models (e.g. logistic regression)
-- fast inference and low memory footprint
-- good performance on small-to-medium audio datasets
-- suitability for a simple Streamlit demo without GPU requirements
-
-The objective is **not** to compete with state-of-the-art deep learning models, but to showcase a **well-reasoned engineering trade-off**.
-
+This choice is not due to technical limitations, but to a **conscious engineering decision**
+supported by empirical benchmarking (see notebook).
 ---
 
 ## Audio Processing & Features
@@ -115,12 +119,13 @@ Additional classes:
 - `unknown`: commands outside the target set
 - `silence`: background noise samples
 
-### Note on Silence Handling
+## Note on Silence Handling
 
-Silence is handled in a **simplified manner** in this demo.
-The application assumes controlled inputs (spoken commands) and does not aim to model real-world silence or noise conditions.
+In the benchmarking notebook, silence is handled properly by sampling fixed-length windows
+from background noise recordings, and is included in both classical and CNN-based experiments.
 
-More robust silence modeling is intentionally left as **future work**.
+For the final demo application, silence handling is simplified in order to keep the interface
+and inference logic minimal.
 
 ---
 
