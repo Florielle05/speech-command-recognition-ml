@@ -1,68 +1,175 @@
-# Speech Command Recognition (Machine Learning)
+# Speech Command Recognition — Lightweight ML Demo (MFCC + SVM)
 
-Machine learning project focused on recognizing short spoken commands (e.g. *yes*, *no*, *up*, *down*, *stop*) from 1-second audio clips.
+This project implements a **lightweight speech command recognition system** designed as a **demonstration application**.
+It focuses on clarity, fast inference, and end-to-end structure rather than maximizing raw performance.
 
-The project compares classical machine learning models with a Convolutional Neural Network (CNN) using MFCC audio features.
+The pipeline covers:
+- audio preprocessing
+- feature extraction
+- model training and evaluation
+- interactive inference through a Streamlit app
 
 ---
 
-## Project Objective
+## Project Motivation
 
-Build and evaluate an end-to-end speech command recognition system:
-- audio preprocessing
-- MFCC feature extraction
-- model training and evaluation
-- comparison between classical ML and deep learning approaches
+The goal of this project is to demonstrate a **clean and understandable machine learning pipeline** applied to audio data.
+
+Rather than using heavy deep learning models, we deliberately focus on:
+- fast inference
+- low model footprint
+- simple deployment
+
+This makes the project suitable as a **technical demo** and an educational example of applied ML.
 
 ---
 
 ## Dataset
 
-**Google / TensorFlow Speech Commands dataset (v0.01)**  
-- ~64,000 audio clips  
-- 1-second duration, 16 kHz sampling rate  
-- 12 classes:
-  - 10 commands: *yes, no, up, down, left, right, on, off, go, stop*
-  - *unknown* (all other words)
-  - *silence* (background noise segments)
+The project uses the **Google Speech Commands dataset**.
+
+Expected structure:
+train/
+  audio/
+    yes/
+    no/
+    up/
+    down/
+    left/
+    right/
+    on/
+    off/
+    stop/
+    go/
+    learn/
+    follow/
+    ...
+    ...
+    background_noise/
+
+
+Each subfolder contains `.wav` files of spoken commands.
 
 ---
 
-## Methods
+## Exploratory Analysis & Model Selection
 
-### Feature Extraction
-- MFCCs (40 coefficients per frame)
-- Flattened MFCC vectors for classical ML
-- 2D MFCC matrices for CNN input
+Before implementing the final pipeline, an exploratory analysis was conducted to better understand the dataset and guide model selection.
 
-### Models Implemented
-- Multinomial Logistic Regression (baseline)
-- Logistic Regression with class weighting and partial feature selection
-- SVM with RBF kernel + PCA
-- Convolutional Neural Network on 2D MFCCs
+The notebook:
+notebooks/01_data_exploration_and_model_choice.ipynb
+covers:
+- class distribution analysis
+- inspection of MFCC features
+- baseline comparison between:
+  - logistic regression (linear baseline)
+  - SVM with non-linear kernel
+- performance vs. complexity trade-offs
 
----
-
-## Results
-
-| Model | Validation Accuracy |
-|-----|--------------------|
-| Logistic Regression | ~0.65 |
-| Logistic Regression (balanced) | ~0.36 |
-| SVM + PCA | ~0.75 |
-| CNN (MFCC 2D) | **~0.89** |
-
-The CNN significantly outperforms classical models by exploiting the time–frequency structure of MFCCs.
+This analysis motivated the choice of an **SVM classifier**, which provides a good balance between expressive power and computational efficiency for a demo-oriented application.
 
 ---
 
-## Key Learnings
+## Model Choice (Why SVM?)
 
-- Audio preprocessing and MFCC feature extraction
-- Limitations of linear models under class imbalance
-- Benefits of non-linear and deep learning approaches
-- Designing and evaluating CNNs for audio classification
-- End-to-end ML experimentation and analysis
+We deliberately use an **SVM classifier** trained on **MFCC features** for this project.
 
-**LODJO Florielle**  
-Engineering student – Data Science & Artificial Intelligence
+This choice offers:
+- stronger decision boundaries than linear models (e.g. logistic regression)
+- fast inference and low memory footprint
+- good performance on small-to-medium audio datasets
+- suitability for a simple Streamlit demo without GPU requirements
+
+The objective is **not** to compete with state-of-the-art deep learning models, but to showcase a **well-reasoned engineering trade-off**.
+
+---
+
+## Audio Processing & Features
+
+- Audio is resampled to **16 kHz**
+- Signals are truncated or zero-padded to **1 second**
+- **MFCC features (40 coefficients)** are extracted
+- MFCCs are flattened to produce fixed-size feature vectors
+
+---
+
+## Model Pipeline
+
+The full training pipeline is:
+StandardScaler → PCA (50 components) → SVM (RBF kernel)
+
+- Scaling ensures numerical stability
+- PCA reduces dimensionality and noise
+- SVM provides non-linear classification
+
+The trained pipeline is serialized using `joblib`.
+
+---
+
+## Labels
+
+Target command classes:
+yes, no, up, down, left, right, on, off, stop, go
+
+Additional classes:
+- `unknown`: commands outside the target set
+- `silence`: background noise samples
+
+### Note on Silence Handling
+
+Silence is handled in a **simplified manner** in this demo.
+The application assumes controlled inputs (spoken commands) and does not aim to model real-world silence or noise conditions.
+
+More robust silence modeling is intentionally left as **future work**.
+
+---
+
+## Training the Model
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run training:
+```bash
+python train.py
+```
+
+This will:
+train the pipeline
+evaluate it on a validation split
+display a confusion matrix
+save the trained model to:
+```bash
+models/pipeline.pkl
+```
+
+## Running the Streamlit Demo
+
+Launch the app:
+```bash
+streamlit run app.py
+```
+The app allows you to:
+upload a .wav file
+run inference using the trained model
+display the predicted command
+The demo is intentionally simple and designed for clarity.
+
+Repository Structure
+```bash
+.
+├── app.py
+├── train.py
+├── src/
+│   └── inference.py
+├── notebooks/
+│   └── 01_data_exploration_and_model_choice.ipynb
+├── models/
+│   └── pipeline.pkl
+├── requirements.txt
+└── README.md
+
+```
