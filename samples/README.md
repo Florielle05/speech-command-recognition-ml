@@ -4,3 +4,6 @@ The repository includes a few sample WAV files in `samples/` not used to train t
 
 ```bash
 python -m streamlit run app.py
+```
+
+And upload files 
