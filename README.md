@@ -29,6 +29,7 @@ This makes the project suitable as a **technical demo** and an educational examp
 The project uses the **Google Speech Commands dataset**.
 
 Expected structure:
+```bash
 train/
   audio/
     yes/
@@ -46,7 +47,7 @@ train/
     ...
     ...
     background_noise/
-
+```
 
 Each subfolder contains `.wav` files of spoken commands.
 
