@@ -1,0 +1,11 @@
+numpy
+joblib
+tqdm
+librosa
+scikit-learn
+matplotlib
+streamlit
+
+# Dépendances souvent nécessaires avec librosa selon l'environnement
+scipy
+soundfile
