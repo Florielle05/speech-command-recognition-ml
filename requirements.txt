@@ -5,10 +5,11 @@ librosa
 scikit-learn
 matplotlib
 streamlit
-streamlit-audiorecorder
-
+streamlit-webrtc
+av
 
 # Dépendances souvent nécessaires avec librosa selon l'environnement
 scipy
 soundfile
+
 
