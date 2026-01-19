@@ -1,4 +1,5 @@
 # Speech Command Recognition — Lightweight ML Demo (MFCC + SVM)
+https://speech-command-recognition-ml-j2bahpsj5ycf6epz4vstoy.streamlit.app/
 
 This project implements a **lightweight speech command recognition system** designed as a **demonstration application**.
 It focuses on clarity, fast inference, and end-to-end structure rather than maximizing raw performance.
