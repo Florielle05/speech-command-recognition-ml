@@ -3,97 +3,115 @@ import tempfile
 import numpy as np
 import soundfile as sf
 
-from streamlit_webrtc import webrtc_streamer, WebRtcMode
-
 from src.inference import predict_command
 
 TARGET_SR = 16000
 TARGET_SEC = 1.0
 TARGET_LEN = int(TARGET_SR * TARGET_SEC)
 
-st.title("Speech Command Recognition Demo")
+st.set_page_config(page_title="Speech Command Recognition Demo", layout="centered")
+st.title("Speech Command Recognition Demo (Upload only)")
+st.caption("Upload a short audio file. The app will convert to 1.0s mono @ 16kHz before inference.")
 
-if "audio_chunks" not in st.session_state:
-    st.session_state.audio_chunks = []
-if "last_sr" not in st.session_state:
-    st.session_state.last_sr = None
 
-def audio_frame_callback(frame):
-    arr = frame.to_ndarray()
+def to_mono(x: np.ndarray) -> np.ndarray:
+    if x.ndim == 1:
+        return x.astype(np.float32)
+    # shape: (samples, channels)
+    return x.mean(axis=1).astype(np.float32)
 
-    # arr can be (channels, samples) or (samples, channels)
-    if arr.ndim == 2:
-        # assume channel dimension is the smaller one (1 or 2)
-        if arr.shape[0] <= 2:
-            mono = arr.mean(axis=0)
-        else:
-            mono = arr.mean(axis=1)
+
+def resample_linear(audio: np.ndarray, sr_in: int, sr_out: int) -> np.ndarray:
+    if sr_in == sr_out or len(audio) == 0:
+        return audio.astype(np.float32)
+    x_old = np.linspace(0, 1, num=len(audio), endpoint=False)
+    new_len = int(len(audio) * sr_out / sr_in)
+    x_new = np.linspace(0, 1, num=new_len, endpoint=False)
+    return np.interp(x_new, x_old, audio).astype(np.float32)
+
+
+def force_len(audio: np.ndarray, n: int) -> np.ndarray:
+    if len(audio) >= n:
+        return audio[:n]
+    return np.pad(audio, (0, n - len(audio))).astype(np.float32)
+
+
+def normalize(audio: np.ndarray) -> np.ndarray:
+    m = float(np.max(np.abs(audio))) if len(audio) else 0.0
+    if m > 0:
+        audio = audio / m
+    return audio.astype(np.float32)
+
+
+def preprocess_audio(path_in: str, path_out: str) -> dict:
+    # Read with soundfile (WAV/FLAC/OGG supported; MP3 depends on your system)
+    x, sr = sf.read(path_in, always_2d=False)
+    x = np.asarray(x)
+
+    # ensure float32
+    if x.dtype.kind in ("i", "u"):
+        # int -> float in [-1, 1] approx
+        maxv = np.iinfo(x.dtype).max
+        x = x.astype(np.float32) / maxv
     else:
-        mono = arr
+        x = x.astype(np.float32)
 
-    mono = mono.astype(np.float32)
+    # mono
+    x = to_mono(x)
 
-    st.session_state.audio_chunks.append(mono)
-    st.session_state.last_sr = frame.sample_rate
-    return frame
+    # resample
+    x = resample_linear(x, sr, TARGET_SR)
+    sr2 = TARGET_SR
 
-st.subheader("🎙️ Record from microphone")
-ctx = webrtc_streamer(
-    key="speech-demo",
-    mode=WebRtcMode.SENDONLY,
-    audio_frame_callback=audio_frame_callback,
-    media_stream_constraints={"audio": True, "video": False},
-)
+    # force 1 sec
+    x = force_len(x, TARGET_LEN)
 
-st.caption("1) Clique Start, parle, puis Stop. 2) Clique ‘Use recorded audio’.")
+    # normalize
+    x = normalize(x)
 
-tmp_path = None
+    sf.write(path_out, x, sr2)
 
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("Use recorded audio"):
-        if not st.session_state.audio_chunks or st.session_state.last_sr is None:
-            st.warning("Aucun audio capturé. Clique Start, parle, puis Stop.")
-        else:
-            audio = np.concatenate(st.session_state.audio_chunks)
-            sr = st.session_state.last_sr
+    return {
+        "sr_in": sr,
+        "sr_out": sr2,
+        "samples_out": len(x),
+        "sec_out": len(x) / sr2,
+    }
 
-            # --- optional: resample to TARGET_SR ---
-            if sr != TARGET_SR:
-                # lightweight resample without extra deps (linear)
-                x_old = np.linspace(0, 1, num=len(audio), endpoint=False)
-                x_new = np.linspace(0, 1, num=int(len(audio) * TARGET_SR / sr), endpoint=False)
-                audio = np.interp(x_new, x_old, audio).astype(np.float32)
-                sr = TARGET_SR
 
-            # --- force 1 second ---
-            if len(audio) >= TARGET_LEN:
-                audio = audio[:TARGET_LEN]
-            else:
-                audio = np.pad(audio, (0, TARGET_LEN - len(audio)))
+uploaded = st.file_uploader("Upload audio (WAV recommended)", type=["wav", "flac", "ogg", "mp3"])
 
-            # simple normalize (avoid division by 0)
-            m = np.max(np.abs(audio))
-            if m > 0:
-                audio = audio / m
+if uploaded is None:
+    st.info("Upload a file to run inference.")
+    st.stop()
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                sf.write(tmp.name, audio, sr)
-                tmp_path = tmp.name
+# Save uploaded file
+with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{uploaded.name}") as tmp_in:
+    tmp_in.write(uploaded.read())
+    in_path = tmp_in.name
 
-with col2:
-    if st.button("Clear buffer"):
-        st.session_state.audio_chunks = []
-        st.session_state.last_sr = None
-        st.info("Buffer effacé.")
+# Preprocess to a clean WAV (1s, 16kHz, mono)
+with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_out:
+    out_path = tmp_out.name
 
-st.subheader("⬆️ Or upload a WAV")
-uploaded = st.file_uploader("Upload a WAV file (1 second)", type=["wav"])
-if uploaded is not None:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-        tmp.write(uploaded.read())
-        tmp_path = tmp.name
+try:
+    info = preprocess_audio(in_path, out_path)
+except Exception as e:
+    st.error("Failed to read/convert audio. Please try a WAV file.")
+    st.exception(e)
+    st.stop()
 
-if tmp_path is not None:
-    label, probs = predict_command(tmp_path)
-    st.success(f"Predicted command: {label}")
+st.success("Audio converted ✅ (mono, 16kHz, 1.0s)")
+st.write(info)
+
+# Playback converted audio
+audio_bytes = open(out_path, "rb").read()
+st.audio(audio_bytes, format="audio/wav")
+
+# Run inference
+label, probs = predict_command(out_path)
+st.success(f"Predicted command: {label}")
+
+# Optional: show top-k probs if it's a dict or array
+with st.expander("Show probabilities"):
+    st.write(probs)
