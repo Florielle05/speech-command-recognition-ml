@@ -182,8 +182,10 @@ Repository Structure
 │   └── inference.py
 ├── notebooks/
 │   └── 01_data_exploration_and_model_choice.ipynb
+│   └──README.md
 ├── models/
 │   └── pipeline.pkl
+│   └──README.md
 ├── requirements.txt
 └── README.md
 
