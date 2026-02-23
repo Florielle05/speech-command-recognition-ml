@@ -9,11 +9,11 @@ streamlit-webrtc
 av
 streamlit>=1.43.2
 streamlit-webrtc==0.61.3
-streamlit-mic-recorder
 
 # Dépendances souvent nécessaires avec librosa selon l'environnement
 scipy
 soundfile
+
 
 
 
