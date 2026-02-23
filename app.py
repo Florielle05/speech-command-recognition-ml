@@ -116,4 +116,4 @@ st.success(f"Predicted command: {label}")
 with st.expander("Show probabilities"):
     st.write(probs)
 
-modifie alors pour que je puisse enregistrer un fichier audio dit moi ce que tu as modifier 
+
