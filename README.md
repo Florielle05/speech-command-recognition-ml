@@ -1,7 +1,7 @@
 # Speech Command Recognition — Lightweight ML Demo (MFCC + SVM)
 # Speech Command Recognition (ML)
 
-[![Streamlit App](https://img.shields.io/badge/Streamlit-Live%20Demo-FF4B4B?logo=streamlit&logoColor=white)](https://speech-command-recognition-ml-7tx4qnctrkbjbvq53wne5a.streamlit.app/)
+[![Streamlit App](https://speech-command-recognition-ml-i9wz3vfftdpuwit68yxgmg.streamlit.app/)
 
 **Live demo:** https://speech-command-recognition-ml-7tx4qnctrkbjbvq53wne5a.streamlit.app/
 > A Streamlit app that classifies short spoken commands using an ML pipeline (audio preprocessing → features → model → prediction).
