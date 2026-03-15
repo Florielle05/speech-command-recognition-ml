@@ -21,8 +21,8 @@ This notebook includes:
 - feature extraction experiments (MFCC, log-mel spectrograms)
 - comparison between:
   - logistic regression
-  - SVM (MFCC-based)
-  - CNN (log-mel spectrograms)
+  - SVM (MFCC-based)  (76% of accuracy)
+  - CNN (log-mel spectrograms) (89% of accuracy)
 - evaluation of accuracy and complexity trade-offs
 
 Although CNN-based models achieve higher raw performance,
